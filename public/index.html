@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WiGo Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              slatebg: '#020817',
+              deep: '#0f172a',
+              panel: '#111827',
+              accent: '#22c55e',
+              highlight: '#38bdf8',
+              accent2: '#f59e0b',
+              danger: '#ef4444'
+            },
+            boxShadow: {
+              glow: '0 0 20px rgba(56,189,248,0.35)'
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      body {
+        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.15), rgba(2, 8, 23, 0.9)), #020817;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-slate-100">
+    <div class="mx-auto max-w-7xl px-4 py-8">
+      <header class="mb-8 flex items-center justify-between rounded-2xl border border-slate-700 bg-slate-900/80 p-5 shadow-glow backdrop-blur">
+        <div>
+          <p class="text-xs uppercase tracking-[0.35em] text-cyan-400">WiGo Enterprise</p>
+          <h1 class="mt-2 text-2xl font-bold text-white">MikroTik Card Distribution Platform</h1>
+        </div>
+        <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
+          System Status: Operational
+        </div>
+      </header>
+
+      <nav class="mb-8 flex flex-wrap gap-3">
+        <button data-role="owner" class="role-tab rounded-xl border border-cyan-500/50 bg-cyan-500/10 px-4 py-2 font-semibold text-cyan-300">Owner Dashboard</button>
+        <button data-role="retailer" class="role-tab rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 font-semibold text-slate-200">Retailer Dashboard</button>
+        <button data-role="client" class="role-tab rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 font-semibold text-slate-200">Client Portal</button>
+      </nav>
+
+      <section id="owner-panel" class="role-panel space-y-6">
+        <div class="grid gap-6 xl:grid-cols-3">
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-cyan-300">Inventory Upload & Parser</h2>
+            <label class="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-cyan-500/50 bg-slate-800 px-4 py-10 text-center text-sm text-slate-300">
+              <input id="ownerFileInput" type="file" accept=".txt,.pdf,.csv" class="hidden" />
+              Upload WiFi card file
+            </label>
+            <textarea id="ownerFileContent" rows="8" class="mt-4 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-100" placeholder="Paste or import card records here..."></textarea>
+            <div class="mt-4 flex gap-3">
+              <button id="parseOwnerCards" class="rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-950">Parse Cards</button>
+              <button id="uploadOwnerCards" class="rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-slate-950">Encrypt & Save</button>
+            </div>
+            <div id="ownerParseResult" class="mt-4 text-sm text-slate-300"></div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-emerald-300">Batch Dispatch Module</h2>
+            <div class="space-y-3 text-sm">
+              <label class="block text-slate-300">
+                Retailer
+                <select id="dispatchRetailer" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3"></select>
+              </label>
+              <label class="block text-slate-300">
+                Warehouse
+                <select id="dispatchWarehouse" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3"></select>
+              </label>
+              <label class="block text-slate-300">
+                Batch Name
+                <input id="dispatchBatchName" value="Batch-2026-01" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3" />
+              </label>
+              <label class="block text-slate-300">
+                Card Denomination
+                <input id="dispatchDenomination" value="500" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3" />
+              </label>
+              <label class="block text-slate-300">
+                Quantity
+                <input id="dispatchQty" value="10" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3" />
+              </label>
+              <button id="dispatchBatchBtn" class="w-full rounded-xl bg-amber-500 px-4 py-3 font-bold text-slate-950">Dispatch to Retailer</button>
+            </div>
+            <div id="dispatchResult" class="mt-4 text-sm text-slate-300"></div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-amber-300">Cash Receipt Register</h2>
+            <div class="space-y-3 text-sm">
+              <label class="block text-slate-300">
+                Retailer
+                <select id="receiptRetailer" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3"></select>
+              </label>
+              <label class="block text-slate-300">
+                Amount (YER)
+                <input id="receiptAmount" value="15000" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3" />
+              </label>
+              <label class="block text-slate-300">
+                Receipt No.
+                <input id="receiptNumber" value="RCPT-001" class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 p-3" />
+              </label>
+              <button id="registerReceiptBtn" class="w-full rounded-xl bg-emerald-500 px-4 py-3 font-bold text-slate-950">Register سند قبض</button>
+            </div>
+            <div id="receiptResult" class="mt-4 text-sm text-slate-300"></div>
+          </div>
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-2">
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-cyan-300">Inventory Warehouses</h2>
+            <div id="ownerWarehouseList" class="space-y-3"></div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-violet-300">Accounting Ledger</h2>
+            <div id="ownerLedgerSummary" class="space-y-3 text-sm"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="retailer-panel" class="role-panel hidden space-y-6">
+        <div class="grid gap-6 xl:grid-cols-2">
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-emerald-300">Retailer Inventory View</h2>
+            <div id="retailerInventoryList" class="space-y-3"></div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-cyan-300">Incoming Client Requests</h2>
+            <div id="retailerRequestList" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-2">
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-amber-300">Retailer Ledger</h2>
+            <div id="retailerLedger" class="space-y-3 text-sm"></div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-fuchsia-300">Warehouse & Network Matrix</h2>
+            <div id="retailerNetworkMatrix" class="space-y-3 text-sm"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="client-panel" class="role-panel hidden space-y-6">
+        <div class="grid gap-6 xl:grid-cols-3">
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-cyan-300">Agent Identification</h2>
+            <div class="space-y-3 text-sm">
+              <input id="clientPhone" placeholder="Phone number" class="w-full rounded-xl border border-slate-700 bg-slate-950 p-3" />
+              <input id="clientRetailerCode" placeholder="Retailer code (e.g. 790901)" class="w-full rounded-xl border border-slate-700 bg-slate-950 p-3" />
+              <button id="registerClientBtn" class="w-full rounded-xl bg-cyan-500 px-4 py-3 font-bold text-slate-950">Register Client</button>
+              <button id="qrScannerBtn" class="w-full rounded-xl border border-cyan-500 bg-slate-950 px-4 py-3 font-bold text-cyan-300">QR Scanner Simulator</button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-emerald-300">Nearby WiFi Radar</h2>
+            <button id="scanNetworksBtn" class="w-full rounded-xl bg-emerald-500 px-4 py-3 font-bold text-slate-950">Scan Nearby Networks</button>
+            <div id="networkRadar" class="mt-4 space-y-3 text-sm"></div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 class="mb-4 text-lg font-semibold text-violet-300">Wallet & Access</h2>
+            <div id="clientWalletSummary" class="space-y-3 text-sm"></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+          <h2 class="mb-4 text-lg font-semibold text-amber-300">Personal Digital Card Wallet</h2>
+          <div id="clientWalletList" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="networkModal" class="fixed inset-0 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+      <div class="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="text-xl font-bold text-cyan-300">Nearby Networks</h3>
+          <button id="closeNetworkModal" class="rounded-lg border border-slate-700 px-3 py-1 text-slate-300">Close</button>
+        </div>
+        <div id="networkModalList" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <script>
+      const state = {
+        ownerId: 'owner-001',
+        retailerId: 'retailer-001',
+        clientId: null,
+        currentRole: 'owner'
+      };
+
+      const roleTabs = document.querySelectorAll('.role-tab');
+      const panels = document.querySelectorAll('.role-panel');
+
+      function showRole(role) {
+        state.currentRole = role;
+        panels.forEach((panel) => panel.classList.add('hidden'));
+        document.getElementById(`${role}-panel`).classList.remove('hidden');
+        roleTabs.forEach((button) => {
+          const active = button.dataset.role === role;
+          button.classList.toggle('bg-cyan-500/10', active);
+          button.classList.toggle('border-cyan-500/50', active);
+          button.classList.toggle('text-cyan-300', active);
+          button.classList.toggle('bg-slate-800', !active);
+          button.classList.toggle('border-slate-700', !active);
+          button.classList.toggle('text-slate-200', !active);
+        });
+      }
+
+      roleTabs.forEach((button) => {
+        button.addEventListener('click', () => showRole(button.dataset.role));
+      });
+
+      async function postJSON(url, payload) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || `Request failed: ${response.status}`);
+        }
+        return data;
+      }
+
+      async function getJSON(url) {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || `Request failed: ${response.status}`);
+        }
+        return data;
+      }
+
+      function renderOwnerSummary(summary) {
+        const ownerLedger = document.getElementById('ownerLedgerSummary');
+        ownerLedger.innerHTML = `
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Total debt</div>
+            <div class="mt-2 text-2xl font-bold text-amber-400">${Number(summary.totalDebt || 0).toLocaleString()} YER</div>
+          </div>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Payments</div>
+            <div class="mt-2 text-2xl font-bold text-emerald-400">${Number(summary.payments || 0).toLocaleString()} YER</div>
+          </div>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Net balance</div>
+            <div class="mt-2 text-2xl font-bold text-cyan-400">${Number(summary.netBalance || 0).toLocaleString()} YER</div>
+          </div>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Inventory count</div>
+            <div class="mt-2 text-2xl font-bold text-violet-400">${Number(summary.totalInventory || 0)}</div>
+          </div>
+        `;
+      }
+
+      function renderOwnerWarehouses(warehouses) {
+        const list = document.getElementById('ownerWarehouseList');
+        list.innerHTML = warehouses.map((warehouse) => `
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="font-semibold text-white">${warehouse.name}</div>
+                <div class="text-xs text-slate-400">${warehouse.location || 'Unknown'} • ${warehouse.network_name || 'Global'}</div>
+              </div>
+              <span class="rounded-full px-2 py-1 text-xs ${warehouse.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'}">${warehouse.status}</span>
+            </div>
+            <div class="mt-3 text-xs text-slate-300">Capacity: ${warehouse.capacity || 0} cards</div>
+          </div>
+        `).join('');
+      }
+
+      function fillRetailerSelect(retailers) {
+        const select = document.getElementById('dispatchRetailer');
+        const receiptSelect = document.getElementById('receiptRetailer');
+        const options = retailers.map((retailer) => `<option value="${retailer.id}">${retailer.name} (${retailer.code})</option>`).join('');
+        select.innerHTML = options;
+        receiptSelect.innerHTML = options;
+      }
+
+      function fillWarehouseSelect(warehouses) {
+        const select = document.getElementById('dispatchWarehouse');
+        select.innerHTML = warehouses.map((warehouse) => `<option value="${warehouse.id}">${warehouse.name}</option>`).join('');
+      }
+
+      function renderRetailerInventory(items) {
+        const list = document.getElementById('retailerInventoryList');
+        if (!items.length) {
+          list.innerHTML = '<div class="rounded-xl border border-slate-700 p-3 text-slate-400">No inventory available.</div>';
+          return;
+        }
+        list.innerHTML = items.map((item) => `
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-cyan-300">${item.denomination} YER</span>
+              <span class="text-xs uppercase text-slate-400">${item.network_name}</span>
+            </div>
+            <div class="mt-2 text-xs text-slate-400">Status: ${item.status}</div>
+            <div class="mt-2 text-xs text-slate-400">ID: ${item.id.slice(0, 8)}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderRequests(requests) {
+        const list = document.getElementById('retailerRequestList');
+        if (!requests.length) {
+          list.innerHTML = '<div class="rounded-xl border border-slate-700 p-3 text-slate-400">No incoming requests.</div>';
+          return;
+        }
+
+        list.innerHTML = requests.map((request) => `
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-white">${request.network_name}</div>
+                <div class="text-xs text-slate-400">Client: ${request.client_id.slice(0, 8)} • ${request.denomination} YER</div>
+              </div>
+              <span class="rounded-full px-2 py-1 text-xs ${request.status === 'pending' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'}">${request.status}</span>
+            </div>
+            <button data-request-id="${request.id}" class="approve-request mt-3 w-full rounded-xl bg-emerald-500 px-3 py-2 font-semibold text-slate-950">Approve & Issue Card</button>
+          </div>
+        `).join('');
+
+        document.querySelectorAll('.approve-request').forEach((button) => {
+          button.addEventListener('click', async () => {
+            const requestId = button.dataset.requestId;
+            const data = await postJSON(`/api/requests/${requestId}/approve`, {});
+            alert(`Card approved: ${data.card.code}`);
+            await loadRetailerView();
+          });
+        });
+      }
+
+      function renderRetailerLedger(summary) {
+        const target = document.getElementById('retailerLedger');
+        target.innerHTML = `
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Owner debt</div>
+            <div class="mt-2 text-2xl font-bold text-amber-400">${Number(summary.totalDebt || 0).toLocaleString()} YER</div>
+          </div>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Payments</div>
+            <div class="mt-2 text-2xl font-bold text-emerald-400">${Number(summary.payments || 0).toLocaleString()} YER</div>
+          </div>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Sales</div>
+            <div class="mt-2 text-2xl font-bold text-cyan-400">${Number(summary.sales || 0).toLocaleString()} YER</div>
+          </div>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Net balance</div>
+            <div class="mt-2 text-2xl font-bold text-violet-400">${Number(summary.netBalance || 0).toLocaleString()} YER</div>
+          </div>
+        `;
+      }
+
+      function renderClientWallet(wallet) {
+        const list = document.getElementById('clientWalletList');
+        if (!wallet.length) {
+          list.innerHTML = '<div class="rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-400">No cards issued yet.</div>';
+          return;
+        }
+
+        list.innerHTML = wallet.map((card) => `
+          <div class="rounded-2xl border border-cyan-500/40 bg-slate-950 p-4 shadow-lg shadow-cyan-900/20">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase tracking-[0.25em] text-cyan-400">${card.network_name || 'WiFi'}</span>
+              <span class="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-300">Connected</span>
+            </div>
+            <div class="mt-4 font-mono text-lg font-bold text-white">${card.card_code || card.decryptedCard || 'WIGO-CARD'}</div>
+            <div class="mt-4 text-xs text-slate-400">Status: ${card.status || 'active'}</div>
+            <button data-copy="${card.card_code || card.decryptedCard || 'WIGO-CARD'}" data-network="${card.network_name || '5G-NET'}" class="copy-card mt-4 w-full rounded-xl bg-cyan-500 px-3 py-2 font-semibold text-slate-950">Copy & Redirect</button>
+          </div>
+        `).join('');
+
+        document.querySelectorAll('.copy-card').forEach((button) => {
+          button.addEventListener('click', async () => {
+            const value = button.dataset.copy;
+            const network = button.dataset.network;
+            await navigator.clipboard.writeText(value);
+            const url = `https://login.mikrotik.example/${encodeURIComponent(network)}?code=${encodeURIComponent(value)}`;
+            window.open(url, '_blank');
+            alert('Card copied and redirect opened.');
+          });
+        });
+      }
+
+      function renderNetworks(list) {
+        const target = document.getElementById('networkRadar');
+        target.innerHTML = list.map((network) => `
+          <button data-network="${network.name}" class="network-pick w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-left text-slate-200">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-white">${network.name}</span>
+              <span class="text-xs text-emerald-300">${network.status}</span>
+            </div>
+            <div class="mt-2 text-xs text-slate-400">Signal: ${network.signal} • Strength: ${network.strength}</div>
+          </button>
+        `).join('');
+
+        document.querySelectorAll('.network-pick').forEach((button) => {
+          button.addEventListener('click', () => {
+            const network = button.dataset.network;
+            document.getElementById('networkModal').classList.add('hidden');
+            document.getElementById('clientWalletSummary').innerHTML = `Selected network: <strong class="text-cyan-300">${network}</strong>`;
+          });
+        });
+      }
+
+      function renderNetworkModal(list) {
+        const target = document.getElementById('networkModalList');
+        target.innerHTML = list.map((network) => `
+          <button data-network="${network.name}" class="select-network w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-left text-slate-200">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-white">${network.name}</span>
+              <span class="text-xs text-emerald-300">${network.status}</span>
+            </div>
+            <div class="mt-2 text-xs text-slate-400">Signal: ${network.signal} • Strength: ${network.strength}</div>
+          </button>
+        `).join('');
+
+        document.querySelectorAll('.select-network').forEach((button) => {
+          button.addEventListener('click', () => {
+            const network = button.dataset.network;
+            document.getElementById('networkModal').classList.add('hidden');
+            document.getElementById('clientWalletSummary').innerHTML = `Selected network: <strong class="text-cyan-300">${network}</strong>`;
+          });
+        });
+      }
+
+      async function loadOwnerView() {
+        try {
+          const ownerData = await getJSON(`/api/owner/${state.ownerId}/summary`);
+          const warehouseData = await getJSON('/api/warehouses');
+          const retailerData = await getJSON('/api/retailers');
+          renderOwnerSummary(ownerData.summary);
+          renderOwnerWarehouses(warehouseData.warehouses);
+          fillRetailerSelect(retailerData.retailers);
+          fillWarehouseSelect(warehouseData.warehouses);
+        } catch (error) {
+          console.error(error);
+          document.getElementById('ownerParseResult').textContent = error.message;
+        }
+      }
+
+      async function loadRetailerView() {
+        try {
+          const retailerData = await getJSON(`/api/retailer/${state.retailerId}/summary`);
+          renderRetailerInventory(retailerData.summary.inventory || []);
+          renderRequests(retailerData.summary.requests || []);
+          renderRetailerLedger(retailerData.summary);
+          const networkData = await getJSON('/api/networks');
+          document.getElementById('retailerNetworkMatrix').innerHTML = networkData.networks.map((network) => `
+            <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-white">${network.name}</span>
+                <span class="text-xs text-emerald-300">${network.status}</span>
+              </div>
+              <div class="mt-2 text-xs text-slate-400">Strength ${network.strength}</div>
+            </div>
+          `).join('');
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      async function loadClientWallet() {
+        try {
+          const client = await getJSON(`/api/client/${state.clientId}/summary`);
+          renderClientWallet(client.summary.wallet || []);
+          document.getElementById('clientWalletSummary').innerHTML = `
+            <div class="rounded-xl border border-slate-700 bg-slate-950 p-3">
+              <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Client</div>
+              <div class="mt-2 text-lg font-bold text-white">${client.summary.client?.name || 'Guest'}</div>
+              <div class="mt-1 text-sm text-slate-400">${client.summary.client?.phone || 'Unknown phone'}</div>
+            </div>
+          `;
+        } catch (error) {
+          console.error(error);
+          document.getElementById('clientWalletSummary').innerHTML = '<div class="text-red-300">Client not registered yet.</div>';
+        }
+      }
+
+      async function scanNetworks() {
+        const data = await getJSON('/api/networks');
+        renderNetworks(data.networks);
+        renderNetworkModal(data.networks);
+        document.getElementById('networkModal').classList.remove('hidden');
+        document.getElementById('networkModal').classList.add('flex');
+      }
+
+      document.getElementById('parseOwnerCards').addEventListener('click', async () => {
+        const content = document.getElementById('ownerFileContent').value;
+        const data = await postJSON('/api/cards/parse', { content, fileName: 'owner-upload.txt' });
+        document.getElementById('ownerParseResult').innerHTML = `Detected ${data.records.length} card records across ${Object.keys(data.summary.byDenomination).length} denominations.`;
+      });
+
+      document.getElementById('uploadOwnerCards').addEventListener('click', async () => {
+        const content = document.getElementById('ownerFileContent').value;
+        const result = await postJSON('/api/cards/upload', {
+          content,
+          fileName: 'owner-upload.txt',
+          warehouseId: document.getElementById('dispatchWarehouse').value,
+          ownerId: state.ownerId
+        });
+        document.getElementById('ownerParseResult').innerHTML = `Saved ${result.uploaded} encrypted records.`;
+        await loadOwnerView();
+      });
+
+      document.getElementById('dispatchBatchBtn').addEventListener('click', async () => {
+        const payload = {
+          ownerId: state.ownerId,
+          retailerId: document.getElementById('dispatchRetailer').value,
+          warehouseId: document.getElementById('dispatchWarehouse').value,
+          batchName: document.getElementById('dispatchBatchName').value,
+          items: [{ denomination: Number(document.getElementById('dispatchDenomination').value), quantity: Number(document.getElementById('dispatchQty').value), networkName: 'al-alam_net' }]
+        };
+        const result = await postJSON('/api/batches/dispatch', payload);
+        document.getElementById('dispatchResult').textContent = result.message;
+        await loadOwnerView();
+        await loadRetailerView();
+      });
+
+      document.getElementById('registerReceiptBtn').addEventListener('click', async () => {
+        const result = await postJSON('/api/payments/receipt', {
+          ownerId: state.ownerId,
+          retailerId: document.getElementById('receiptRetailer').value,
+          amount: Number(document.getElementById('receiptAmount').value),
+          receiptNumber: document.getElementById('receiptNumber').value,
+          note: 'Cash receipt from retailer'
+        });
+        document.getElementById('receiptResult').textContent = result.message;
+        await loadOwnerView();
+        await loadRetailerView();
+      });
+
+      document.getElementById('registerClientBtn').addEventListener('click', async () => {
+        const name = `Client-${Date.now()}`;
+        const phone = document.getElementById('clientPhone').value || '+96777111111';
+        const retailerCode = document.getElementById('clientRetailerCode').value || '790901';
+        const retailerData = await getJSON('/api/retailers');
+        const retailer = retailerData.retailers.find((item) => item.code === retailerCode) || retailerData.retailers[0];
+        const result = await postJSON('/api/clients/register', {
+          name,
+          phone,
+          retailerId: retailer.id,
+          networkPreference: '5G-NET'
+        });
+        state.clientId = result.client.id;
+        await loadClientWallet();
+        alert(`Client registered successfully: ${result.client.name}`);
+      });
+
+      document.getElementById('scanNetworksBtn').addEventListener('click', scanNetworks);
+      document.getElementById('closeNetworkModal').addEventListener('click', () => {
+        document.getElementById('networkModal').classList.add('hidden');
+      });
+
+      document.getElementById('qrScannerBtn').addEventListener('click', () => {
+        const code = prompt('Enter retailer code or scan QR code value', '790901');
+        if (code) {
+          document.getElementById('clientRetailerCode').value = code;
+        }
+      });
+
+      document.getElementById('ownerFileInput').addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async () => {
+          let content = String(reader.result || '');
+          if (file.name.toLowerCase().endsWith('.pdf')) {
+            content = Array.from(new Uint8Array(reader.result)).map((byte) => String.fromCharCode(byte)).join('');
+          }
+          document.getElementById('ownerFileContent').value = content;
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      function ready() {
+        showRole('owner');
+        loadOwnerView();
+        loadRetailerView();
+        const clientFallback = 'client-001';
+        state.clientId = clientFallback;
+        loadClientWallet();
+        scanNetworks();
+      }
+
+      ready();
+    </script>
+  </body>
+</html>
